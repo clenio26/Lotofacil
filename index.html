@@ -7,7 +7,7 @@
 
 <style>
 body{font-family:Arial;margin:0;background:#f4f6f9;display:flex}
-.sidebar{width:350px;background:#1f2937;color:#fff;padding:10px;height:100vh;overflow:auto}
+.sidebar{width:350px;background:#1f2937;color:#fff;padding:10px;height:100vh;overflow-y:auto}
 .main{flex:1;padding:10px;text-align:center}
 
 .grid{display:grid;grid-template-columns:repeat(5,60px);gap:8px;justify-content:center}
@@ -55,8 +55,7 @@ Jogos <input id="qtdJogos" value="50">
 
 <div class="filtro">
 <label><input type="checkbox" id="f_seq" checked> Sequência</label><br>
-2 <input id="s2min" value="0"> <input id="s2max" value="5"><br>
-3 <input id="s3min" value="0"> <input id="s3max" value="3">
+<input id="s2min" value="0"> <input id="s2max" value="5">
 </div>
 
 <div class="filtro">
@@ -81,7 +80,10 @@ Jogos <input id="qtdJogos" value="50">
 <script>
 
 let sel=[];
+const grid = document.getElementById("grid");
+const contSel = document.getElementById("contSel");
 
+// GRID
 for(let i=1;i<=25;i++){
  let d=document.createElement("div");
  d.className="cell";
@@ -101,6 +103,7 @@ for(let i=1;i<=25;i++){
  grid.appendChild(d);
 }
 
+// BOTÕES
 function selAll(){
  sel=[...Array(25)].map((_,i)=>i+1);
  document.querySelectorAll(".cell").forEach(c=>c.classList.add("sel"));
@@ -113,6 +116,7 @@ function clearSel(){
  contSel.innerText=0;
 }
 
+// FUNÇÕES
 function soma(j){return j.reduce((a,b)=>a+b,0)}
 
 function seqCount(j){
@@ -127,7 +131,13 @@ function seqCount(j){
 
 function parse(t){return t.match(/\d+/g)?.map(Number)||[]}
 
+// GERAR
 function gerar(){
+
+ if(sel.length===0){
+  alert("Selecione as dezenas!");
+  return;
+ }
 
  let qtd=+document.getElementById("qtd").value;
  let total=+document.getElementById("qtdJogos").value;
@@ -151,24 +161,24 @@ function gerar(){
   let ok=true;
 
   if(f_soma.checked){
-   if(soma(j)<somaMin.value||soma(j)>somaMax.value) ok=false;
+   if(soma(j)<+somaMin.value||soma(j)>+somaMax.value) ok=false;
   }
 
   let p=j.filter(n=>n%2==0).length;
 
   if(f_pares.checked){
-   if(p<paresMin.value||p>paresMax.value) ok=false;
+   if(p<+paresMin.value||p>+paresMax.value) ok=false;
   }
 
   let imp=j.length-p;
 
   if(f_imp.checked){
-   if(imp<impMin.value||imp>impMax.value) ok=false;
+   if(imp<+impMin.value||imp>+impMax.value) ok=false;
   }
 
   if(f_seq.checked){
    let s=seqCount(j);
-   if(s<s2min.value||s>s2max.value) ok=false;
+   if(s<+s2min.value||s>+s2max.value) ok=false;
   }
 
   if(f_c1.checked){
@@ -180,7 +190,8 @@ function gerar(){
   if(ok) res.push(j);
  }
 
- out.value=res.map(j=>j.map(n=>String(n).padStart(2,'0')).join(" ")).join("\n");
+ document.getElementById("out").value =
+  res.map(j=>j.map(n=>String(n).padStart(2,'0')).join(" ")).join("\n");
 }
 
 </script>
