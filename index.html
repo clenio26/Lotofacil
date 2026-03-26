@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LotoFácil PRO V4+</title>
+
+<style>
+body{font-family:Arial;margin:0;background:#f4f6f9;display:flex}
+.sidebar{width:380px;background:#1f2937;color:#fff;padding:15px;height:100vh;overflow:auto}
+.main{flex:1;padding:15px;text-align:center}
+
+.grid{display:grid;grid-template-columns:repeat(5,60px);gap:8px;justify-content:center}
+.cell{width:60px;height:60px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:bold}
+.sel{background:#10b981;color:#fff}
+
+input{width:45px;font-weight:bold;text-align:center}
+.big{width:95%;height:50px}
+textarea{width:95%;height:70px}
+
+.filtro{background:#111;padding:8px;margin:6px 0;border-radius:6px}
+
+button{padding:10px;margin:5px;font-weight:bold}
+
+.progress{height:8px;background:#ccc;border-radius:5px}
+.bar{height:8px;background:#10b981;width:0%}
+
+.bola{width:25px;height:25px;margin:2px;border-radius:4px;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+.acertou{background:#10b981;color:#fff}
+.repetido{background:#f59e0b;color:#fff}
+.nao{background:#fff;border:1px solid #ccc}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<h3>Seleção</h3>
+<div id="contSel">0</div>
+<button onclick="selAll()">25</button>
+<button onclick="clearSel()">Limpar</button>
+
+<h3>Config</h3>
+Qtd <input id="qtd" value="15">
+Jogos <input id="qtdJogos" value="50">
+
+<h3>Resultado anterior</h3>
+<button onclick="buscarResultado()">Atualizar</button>
+<input id="ultimoResultado" class="big">
+
+<div class="filtro"><b>Soma</b><br>
+<input id="somaMin" value="170"> <input id="somaMax" value="280"></div>
+
+<div class="filtro"><b>Pares</b><br>
+<input id="paresMin" value="5"> <input id="paresMax" value="10"></div>
+
+<div class="filtro"><b>Ímpares</b><br>
+<input id="impMin" value="5"> <input id="impMax" value="10"></div>
+
+<div class="filtro"><b>Fibonacci</b><br>
+<input id="fibMin" value="1"> <input id="fibMax" value="6"></div>
+
+<div class="filtro"><b>Primos</b><br>
+<input id="prMin" value="2"> <input id="prMax" value="8"></div>
+
+<div class="filtro"><b>Múltiplos 3</b><br>
+<input id="m3Min" value="2"> <input id="m3Max" value="8"></div>
+
+<div class="filtro"><b>Moldura</b><br>
+<input id="moldMin" value="5"> <input id="moldMax" value="13"></div>
+
+<div class="filtro"><b>Miolo</b><br>
+<input id="mioMin" value="3"> <input id="mioMax" value="9"></div>
+
+<div class="filtro"><b>Repetidos</b><br>
+<input id="repMin" value="6"> <input id="repMax" value="12"></div>
+
+<div class="filtro"><b>Sequência</b><br>
+1 <input id="s1min" value="0"> <input id="s1max" value="10"><br>
+2 <input id="s2min" value="0"> <input id="s2max" value="5"><br>
+3 <input id="s3min" value="0"> <input id="s3max" value="3"><br>
+4 <input id="s4min" value="0"> <input id="s4max" value="2"><br>
+5 <input id="s5min" value="0"> <input id="s5max" value="1"><br>
+6 <input id="s6min" value="0"> <input id="s6max" value="1">
+</div>
+
+<div class="filtro"><b>Filtro 1</b><br>
+<textarea id="c1"></textarea><br>
+Min <input id="c1min" value="1"> Max <input id="c1max" value="10"></div>
+
+<div class="filtro"><b>Filtro 2</b><br>
+<textarea id="c2"></textarea><br>
+Min <input id="c2min" value="1"> Max <input id="c2max" value="10"></div>
+
+<div class="filtro"><b>Filtro 3</b><br>
+<textarea id="c3"></textarea><br>
+Min <input id="c3min" value="1"> Max <input id="c3max" value="10"></div>
+
+</div>
+
+<div class="main">
+
+<h2>LotoFácil PRO V4+</h2>
+
+<div id="grid" class="grid"></div>
+
+<div class="progress"><div id="bar" class="bar"></div></div>
+<div id="status"></div>
+
+<button onclick="gerar()">GERAR</button>
+<button onclick="dashboard()">RESULTADOS</button>
+
+<textarea id="out"></textarea>
+<div id="dash"></div>
+
+</div>
+
+<script>
+
+let sel=[];
+
+for(let i=1;i<=25;i++){
+ let d=document.createElement("div");
+ d.className="cell";
+ d.innerText=String(i).padStart(2,'0');
+
+ d.onclick=()=>{
+  sel.includes(i)?sel=sel.filter(n=>n!=i):sel.push(i);
+  d.classList.toggle("sel");
+  contSel.innerText=sel.length;
+ };
+
+ grid.appendChild(d);
+}
+
+function selAll(){
+ sel=[...Array(25)].map((_,i)=>i+1);
+ document.querySelectorAll(".cell").forEach(c=>c.classList.add("sel"));
+ contSel.innerText=25;
+}
+
+function clearSel(){
+ sel=[];
+ document.querySelectorAll(".cell").forEach(c=>c.classList.remove("sel"));
+ contSel.innerText=0;
+}
+
+function soma(j){return j.reduce((a,b)=>a+b,0)}
+function parse(t){return t.match(/\d+/g)?.map(Number)||[]}
+
+function seqCount(j){
+ let r={1:0,2:0,3:0,4:0,5:0,6:0};
+ let c=1;
+ for(let i=1;i<j.length;i++){
+  if(j[i]==j[i-1]+1)c++;
+  else{r[c]++;c=1;}
+ }
+ r[c]++;
+ return r;
+}
+
+function gerar(){
+
+ let qtd=+qtd.value;
+ let total=+qtdJogos.value;
+
+ let res=[],t=0;
+
+ while(res.length<total && t<50000){
+  t++;
+
+  let pool=[...sel],j=[];
+
+  while(j.length<qtd && pool.length){
+   let i=Math.floor(Math.random()*pool.length);
+   j.push(pool.splice(i,1)[0]);
+  }
+
+  if(j.length!=qtd)continue;
+
+  j.sort((a,b)=>a-b);
+
+  let ok=true;
+
+  if(soma(j)<somaMin.value||soma(j)>somaMax.value) ok=false;
+
+  let p=j.filter(n=>n%2==0).length;
+  if(p<paresMin.value||p>paresMax.value) ok=false;
+
+  let imp=j.length-p;
+  if(imp<impMin.value||imp>impMax.value) ok=false;
+
+  let fib=[1,2,3,5,8,13,21];
+  let cf=j.filter(n=>fib.includes(n)).length;
+  if(cf<fibMin.value||cf>fibMax.value) ok=false;
+
+  let pr=[2,3,5,7,11,13,17,19,23];
+  let cp=j.filter(n=>pr.includes(n)).length;
+  if(cp<prMin.value||cp>prMax.value) ok=false;
+
+  let m3=j.filter(n=>n%3==0).length;
+  if(m3<m3Min.value||m3>m3Max.value) ok=false;
+
+  let seq=seqCount(j);
+  if(seq[1]<s1min.value||seq[1]>s1max.value) ok=false;
+  if(seq[2]<s2min.value||seq[2]>s2max.value) ok=false;
+  if(seq[3]<s3min.value||seq[3]>s3max.value) ok=false;
+  if(seq[4]<s4min.value||seq[4]>s4max.value) ok=false;
+  if(seq[5]<s5min.value||seq[5]>s5max.value) ok=false;
+  if(seq[6]<s6min.value||seq[6]>s6max.value) ok=false;
+
+  let c1v=parse(c1.value);
+  let c1c=j.filter(n=>c1v.includes(n)).length;
+  if(c1c<c1min.value||c1c>c1max.value) ok=false;
+
+  if(ok) res.push(j);
+
+  bar.style.width=(res.length/total*100)+"%";
+  status.innerText=res.length+"/"+total;
+ }
+
+ out.value=res.map(j=>j.map(n=>String(n).padStart(2,'0')).join(" ")).join("\n");
+}
+
+function dashboard(){
+ let txt=prompt("Cole resultados");
+ if(!txt)return;
+
+ dash.innerHTML="";
+ let ant=null;
+
+ txt.split("\n").forEach(l=>{
+  let nums=parse(l);
+  let div=document.createElement("div");
+
+  for(let i=1;i<=25;i++){
+   let b=document.createElement("div");
+   b.className="bola "+(nums.includes(i)?"acertou":"nao");
+   if(ant&&nums.includes(i)&&ant.includes(i)) b.className="bola repetido";
+   b.innerText=i;
+   div.appendChild(b);
+  }
+
+  dash.appendChild(div);
+  ant=nums;
+ });
+}
+
+async function buscarResultado(){
+ let r=await fetch("https://loteriascaixa-api.herokuapp.com/api/lotofacil/latest");
+ let d=await r.json();
+ ultimoResultado.value=d.dezenas.join(" ");
+}
+
+</script>
+
+</body>
+</html>
